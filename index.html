@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRD · ИИ-эксперт по планированию закупок</title>
+<style>
+  :root{
+    --bg: #0b0e14;
+    --bg-elev: #11151f;
+    --bg-elev-2: #161b28;
+    --border: #232a3b;
+    --text: #e7eaf2;
+    --text-dim: #9aa4bb;
+    --text-faint: #6b7590;
+    --accent: #5b8cff;
+    --accent-soft: #5b8cff22;
+    --accent-text: #9fbaff;
+    --ok: #35c98f;
+    --ok-bg: #35c98f1a;
+    --warn: #e8b84b;
+    --warn-bg: #e8b84b1a;
+    --bad: #ef5d6f;
+    --bad-bg: #ef5d6f1a;
+    --q: #9b7bd4;
+    --q-bg: #9b7bd41a;
+    --code-bg: #0d1017;
+    --shadow: 0 8px 30px rgba(0,0,0,0.35);
+    --radius: 14px;
+  }
+
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg: #f6f7fb;
+      --bg-elev: #ffffff;
+      --bg-elev-2: #eef0f6;
+      --border: #e1e4ee;
+      --text: #1b2030;
+      --text-dim: #525a72;
+      --text-faint: #8890a6;
+      --accent: #3f66d6;
+      --accent-soft: #3f66d614;
+      --accent-text: #2d4eb0;
+      --ok: #16915e;
+      --ok-bg: #16915e14;
+      --warn: #b4860a;
+      --warn-bg: #b4860a14;
+      --bad: #c23a4b;
+      --bad-bg: #c23a4b14;
+      --q: #7446b8;
+      --q-bg: #7446b814;
+      --code-bg: #11141c;
+      --shadow: 0 8px 24px rgba(30,40,70,0.08);
+    }
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  a{ color: var(--accent-text); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+
+  /* ---------- Layout ---------- */
+  .shell{
+    display: grid;
+    grid-template-columns: 272px minmax(0,1fr);
+    min-height: 100vh;
+  }
+
+  nav.sidebar{
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 18px 40px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-elev);
+  }
+  nav.sidebar::-webkit-scrollbar{ width: 8px; }
+  nav.sidebar::-webkit-scrollbar-thumb{ background: var(--border); border-radius: 4px; }
+
+  .brand{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .brand-mark{
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #9b7bd4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow);
+  }
+  .brand-text{ font-size: 13px; line-height: 1.3; color: var(--text-dim); }
+  .brand-text strong{ display:block; color: var(--text); font-size: 14px; }
+
+  .nav-group-title{
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    padding: 14px 10px 6px;
+    font-weight: 600;
+  }
+  .nav-link{
+    display: block;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: var(--text-dim);
+    transition: background .12s ease, color .12s ease;
+  }
+  .nav-link:hover{ background: var(--bg-elev-2); color: var(--text); text-decoration: none; }
+  .nav-link.active{ background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+
+  main{
+    padding: 48px clamp(20px, 5vw, 72px) 100px;
+    max-width: 980px;
+    min-width: 0;
+  }
+
+  /* ---------- Header ---------- */
+  .doc-header{
+    margin-bottom: 44px;
+  }
+  .kicker{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+    letter-spacing: 0.02em;
+  }
+  h1.title{
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.15;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle{ color: var(--text-dim); font-size: 16px; max-width: 640px; margin: 0 0 28px; }
+
+  .meta-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .meta-cell{ background: var(--bg-elev); padding: 14px 18px; }
+  .meta-cell .k{ font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); margin-bottom: 4px; }
+  .meta-cell .v{ font-size: 14px; color: var(--text); font-weight: 500; }
+
+  /* ---------- Sections ---------- */
+  section{ padding-top: 56px; margin-top: -8px; scroll-margin-top: 24px; }
+  section:first-of-type{ padding-top: 0; }
+
+  .section-head{
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+  }
+  .section-num{
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  h2{ font-size: 22px; margin: 0; letter-spacing: -0.01em; }
+  h3{ font-size: 16.5px; margin: 28px 0 12px; color: var(--text); }
+  p{ color: var(--text-dim); margin: 0 0 14px; }
+  p.lead{ color: var(--text); font-size: 15.5px; }
+
+  ul, ol{ color: var(--text-dim); padding-left: 22px; margin: 0 0 16px; }
+  ul li, ol li{ margin-bottom: 7px; }
+  ul li::marker{ color: var(--accent-text); }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .card-title{ font-weight: 600; font-size: 14.5px; margin-bottom: 8px; display:flex; align-items:center; gap:8px; }
+
+  .grid-2{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px){ .grid-2{ grid-template-columns: 1fr; } }
+
+  .pill{
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 600;
+    padding: 3px 10px; border-radius: 999px;
+    margin-bottom: 10px;
+  }
+  .pill.ok{ background: var(--ok-bg); color: var(--ok); }
+  .pill.bad{ background: var(--bad-bg); color: var(--bad); }
+  .pill.warn{ background: var(--warn-bg); color: var(--warn); }
+  .pill.muted{ background: var(--bg-elev-2); color: var(--text-faint); }
+
+  /* ---------- Tables ---------- */
+  .table-wrap{
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    background: var(--bg-elev);
+  }
+  table{ border-collapse: collapse; width: 100%; font-size: 13.8px; min-width: 520px; }
+  thead th{
+    text-align: left;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--text-faint);
+    background: var(--bg-elev-2);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  tbody td{
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+  tbody tr:last-child td{ border-bottom: none; }
+  tbody td:first-child{ color: var(--text); font-weight: 500; }
+  tbody tr:hover td{ background: var(--bg-elev-2); }
+
+  .req-id{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--accent-text);
+    background: var(--accent-soft);
+    padding: 1px 7px;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+
+  /* status badges inline in tables */
+  .status{ display:inline-flex; align-items:center; gap:5px; font-weight:600; white-space:nowrap; font-size: 13px; }
+  .status.ok{ color: var(--ok); }
+  .status.warn{ color: var(--warn); }
+  .status.bad{ color: var(--bad); }
+  .status.q{ color: var(--q); }
+
+  /* ---------- Status legend cards ---------- */
+  .legend-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 14px; margin-bottom: 20px; }
+  .legend-card{ border-radius: var(--radius); padding: 16px 18px; border: 1px solid var(--border); }
+  .legend-card .sym{ font-size: 20px; margin-bottom: 8px; display:block; }
+  .legend-card.ok{ background: var(--ok-bg); border-color: color-mix(in srgb, var(--ok) 35%, var(--border)); }
+  .legend-card.warn{ background: var(--warn-bg); border-color: color-mix(in srgb, var(--warn) 35%, var(--border)); }
+  .legend-card.bad{ background: var(--bad-bg); border-color: color-mix(in srgb, var(--bad) 35%, var(--border)); }
+  .legend-card.q{ background: var(--q-bg); border-color: color-mix(in srgb, var(--q) 35%, var(--border)); }
+  .legend-card .lbl{ font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .legend-card .desc{ font-size: 12.8px; color: var(--text-dim); }
+
+  /* ---------- Flow / scope ---------- */
+  .scope-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 16px; margin-bottom: 10px; }
+  .scope-col{ border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; background: var(--bg-elev); }
+  .scope-col h4{ margin: 0 0 12px; font-size: 14px; display:flex; align-items:center; gap:8px; }
+  .scope-col.in h4{ color: var(--ok); }
+  .scope-col.next h4{ color: var(--accent-text); }
+  .scope-col.out h4{ color: var(--bad); }
+  .scope-col ul{ margin: 0; padding-left: 18px; }
+  .scope-col li{ font-size: 13.8px; margin-bottom: 8px; }
+
+  /* ---------- Blocks (FR) ---------- */
+  .block-card{
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    overflow: hidden;
+    background: var(--bg-elev);
+  }
+  .block-card .block-head{
+    padding: 14px 20px;
+    background: var(--bg-elev-2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 14.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .block-num{
+    width: 24px; height: 24px; border-radius: 7px;
+    background: var(--accent); color: white;
+    font-size: 12px; font-weight: 700;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink: 0;
+  }
+
+  /* ---------- Open questions ---------- */
+  .qgroup{ margin-bottom: 18px; }
+  .qgroup-title{
+    font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--q); margin-bottom: 10px;
+  }
+  .qlist{ list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .qlist li{
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--q);
+    border-radius: 10px;
+    padding: 11px 16px;
+    font-size: 13.8px;
+    color: var(--text);
+  }
+
+  /* ---------- Risks ---------- */
+  .risk-row{
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    background: var(--bg-elev);
+  }
+  @media (max-width: 640px){ .risk-row{ grid-template-columns: 1fr; } }
+  .risk-row .label{ font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-faint); margin-bottom: 5px; }
+  .risk-row .risk-text{ color: var(--bad); font-weight: 500; font-size: 13.8px; }
+  .risk-row .mit-text{ color: var(--ok); font-weight: 500; font-size: 13.8px; }
+
+  /* ---------- Timeline ---------- */
+  .timeline{ position: relative; padding-left: 34px; margin-bottom: 10px; }
+  .timeline::before{
+    content: ""; position: absolute; left: 11px; top: 6px; bottom: 6px; width: 2px;
+    background: var(--border);
+  }
+  .tl-step{ position: relative; padding-bottom: 22px; }
+  .tl-step:last-child{ padding-bottom: 0; }
+  .tl-step::before{
+    content: ""; position: absolute; left: -34px; top: 2px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bg-elev); border: 2px solid var(--accent);
+  }
+  .tl-step::after{
+    content: attr(data-n); position: absolute; left: -29px; top: 5px;
+    font-size: 11px; font-weight: 700; color: var(--accent-text); width: 12px; text-align:center;
+  }
+  .tl-step .tl-text{ font-size: 14px; color: var(--text); padding-top: 1px; }
+
+  /* ---------- Code / prompt ---------- */
+  .code-wrap{
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .code-head{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .code-head .fname{ font-size: 12.5px; color: var(--text-faint); font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .copy-btn{
+    font-size: 12px; color: var(--text-dim); background: var(--bg-elev-2);
+    border: 1px solid var(--border); border-radius: 7px; padding: 5px 11px;
+    cursor: pointer; font-family: inherit;
+  }
+  .copy-btn:hover{ color: var(--text); border-color: var(--accent); }
+  .copy-btn.copied{ color: var(--ok); border-color: var(--ok); }
+  pre{
+    margin: 0; padding: 20px; overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12.6px; line-height: 1.65; color: #d7dcea;
+    max-height: 560px; overflow-y: auto;
+  }
+  pre::-webkit-scrollbar{ width: 8px; height: 8px; }
+  pre::-webkit-scrollbar-thumb{ background: #333a4d; border-radius: 4px; }
+  .cm-h{ color: #7dd3fc; font-weight: 700; }
+  .cm-dim{ color: #6b7590; }
+  .cm-ph{ color: #e8b84b; }
+
+  footer{
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: 12.5px;
+  }
+
+  /* mobile */
+  @media (max-width: 880px){
+    .shell{ grid-template-columns: 1fr; }
+    nav.sidebar{
+      position: relative; height: auto; width: 100%;
+      border-right: none; border-bottom: 1px solid var(--border);
+      padding: 16px;
+    }
+    nav.sidebar .nav-links{ display: none; }
+    nav.sidebar.open .nav-links{ display: block; }
+    .brand{ border-bottom: none; margin-bottom: 0; cursor: pointer; }
+    main{ padding: 32px 18px 80px; }
+  }
+  .toggle-icon{ margin-left: auto; color: var(--text-faint); display:none; }
+  @media (max-width: 880px){ .toggle-icon{ display:block; } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar">
+    <div class="brand" id="brandToggle">
+      <div class="brand-mark">🧾</div>
+      <div class="brand-text"><strong>ИИ-плановик закупок</strong>PRD · v0.1 черновик</div>
+      <div class="toggle-icon">☰</div>
+    </div>
+    <div class="nav-links">
+      <div class="nav-group-title">Обзор</div>
+      <a class="nav-link" href="#context">1. Контекст и проблема</a>
+      <a class="nav-link" href="#goal">2. Цель продукта</a>
+      <a class="nav-link" href="#role">3. Роль инструмента</a>
+      <a class="nav-link" href="#users">4. Пользователи</a>
+
+      <div class="nav-group-title">Границы</div>
+      <a class="nav-link" href="#scope">5. Объём работ</a>
+      <a class="nav-link" href="#norms">6. Нормативная база</a>
+      <a class="nav-link" href="#input">7. Входные данные</a>
+
+      <div class="nav-group-title">Требования</div>
+      <a class="nav-link" href="#functional">8. Функциональные требования</a>
+      <a class="nav-link" href="#classification">9. Классификация результатов</a>
+      <a class="nav-link" href="#output">10. Формат вывода</a>
+      <a class="nav-link" href="#nfr">11. Нефункциональные требования</a>
+
+      <div class="nav-group-title">Планирование</div>
+      <a class="nav-link" href="#metrics">12. Метрики успеха</a>
+      <a class="nav-link" href="#questions">13. Открытые вопросы</a>
+      <a class="nav-link" href="#risks">14. Риски</a>
+      <a class="nav-link" href="#rollout">15. План внедрения</a>
+
+      <div class="nav-group-title">Приложение</div>
+      <a class="nav-link" href="#prompt">А. Системный промт</a>
+    </div>
+  </nav>
+
+  <main>
+    <header class="doc-header">
+      <span class="kicker">📋 PRD · На согласовании — есть открытые вопросы (раздел 13)</span>
+      <h1 class="title">ИИ-эксперт по планированию закупок</h1>
+      <p class="subtitle">Квазигосударственный сектор Республики Казахстан · ассистент плановика для формирования и проверки плана закупок до его утверждения.</p>
+
+      <div class="meta-grid">
+        <div class="meta-cell"><div class="k">Продукт</div><div class="v">ИИ-ассистент плановика по формированию плана закупок</div></div>
+        <div class="meta-cell"><div class="k">Заказчик</div><div class="v">Нац. компания, группа АО «Самрук-Қазына»</div></div>
+        <div class="meta-cell"><div class="k">Версия документа</div><div class="v">0.1 (черновик)</div></div>
+        <div class="meta-cell"><div class="k">Статус</div><div class="v">На согласовании</div></div>
+      </div>
+    </header>
+
+    <section id="context">
+      <div class="section-head"><div class="section-num">1</div><h2>Контекст и проблема</h2></div>
+      <p class="lead">Национальная компания формирует годовой план закупок и вносит в него корректировки в течение года. Каждая позиция плана должна соответствовать Порядку осуществления закупок АО «Самрук-Қазына», Единому номенклатурному справочнику ТРУ (ЕНС ТРУ) и утверждённым перечням.</p>
+      <p>Сейчас эта проверка выполняется вручную, что приводит к типовым проблемам:</p>
+      <div class="scope-grid">
+        <div class="scope-col out">
+          <h4>⚠️ Типовые ошибки</h4>
+          <ul>
+            <li>Код ЕНС ТРУ не соответствует дополнительной характеристике</li>
+            <li>Выбран неправомерный способ закупки</li>
+            <li>Не учтено вхождение ТРУ в обязательный перечень</li>
+            <li>Допускается дробление закупок</li>
+          </ul>
+        </div>
+        <div class="scope-col in">
+          <h4>🕓 Когда это вскрывается</h4>
+          <ul>
+            <li>На этапе согласования плана</li>
+            <li>При размещении на портале закупок</li>
+            <li>При проверках внутреннего аудита, Фонда и СВА</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="goal">
+      <div class="section-head"><div class="section-num">2</div><h2>Цель продукта</h2></div>
+      <div class="card">
+        <p class="lead" style="margin-bottom:0;">Создать ИИ-инструмент, который помогает плановику формировать план закупок и проверяет каждую позицию <strong>ещё до утверждения плана</strong> и размещения на портале — а при обнаружении несоответствия сразу предлагает корректный вариант позиции.</p>
+      </div>
+    </section>
+
+    <section id="role">
+      <div class="section-head"><div class="section-num">3</div><h2>Роль инструмента</h2></div>
+      <p>Инструмент выполняет роль специалиста-плановика по формированию плана закупок: помогает составлять план и его корректировки, подбирает коды ЕНС ТРУ и формулирует характеристики, определяет способ закупки и проверяет каждую позицию на соответствие Порядку и утверждённым перечням на этапе формирования.</p>
+      <div class="card" style="border-left: 3px solid var(--bad);">
+        <div class="card-title">🚫 Важное ограничение</div>
+        <p style="margin:0;">Инструмент <strong>не утверждает план</strong> и <strong>не принимает решений</strong> за пользователя: он готовит проект плана и обоснования к нему.</p>
+      </div>
+    </section>
+
+    <section id="users">
+      <div class="section-head"><div class="section-num">4</div><h2>Пользователи</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Пользователь</th><th>Потребность</th></tr></thead>
+          <tbody>
+            <tr><td>Плановик отдела закупок <span class="pill ok" style="margin:0 0 0 6px;">основной</span></td><td>Быстро сформировать и проверить план, получить обоснования со ссылками на нормы</td></tr>
+            <tr><td>Руководитель отдела закупок</td><td>Видеть сводку рисков по плану перед утверждением</td></tr>
+            <tr><td>Инициатор закупки из профильного подразделения <span class="pill warn" style="margin:0 0 0 6px;">под вопросом</span></td><td>Корректно описать потребность без глубокого знания ЕНС ТРУ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="scope">
+      <div class="section-head"><div class="section-num">5</div><h2>Объём работ</h2></div>
+
+      <h3>5.1. Входит в MVP</h3>
+      <div class="scope-grid" style="grid-template-columns: 1fr;">
+        <div class="scope-col in">
+          <ul>
+            <li>Проверка соответствия кода ЕНС ТРУ наименованию, краткой и дополнительной характеристике (Блок 1)</li>
+            <li>Проверка правомерности выбора способа закупки по Порядку (Блок 2)</li>
+            <li>Проверка кодов ЕНС ТРУ по всем утверждённым перечням (Блок 3)</li>
+            <li>Выявление признаков дробления закупок</li>
+            <li>Формирование отчёта с реестром замечаний и рекомендациями</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="scope-grid">
+        <div class="scope-col next">
+          <h4>🔜 Кандидаты на следующие версии</h4>
+          <ul>
+            <li>Режим «создать позицию по описанию потребности»</li>
+            <li>Проверка расчёта цены и суммы закупки</li>
+            <li>Проверка доли местного содержания и сверка с реестрами отечественных товаропроизводителей</li>
+            <li>Сверка плана закупок с бюджетом / планом развития</li>
+          </ul>
+        </div>
+        <div class="scope-col out">
+          <h4>✕ Не входит</h4>
+          <ul>
+            <li>Утверждение плана и принятие решений</li>
+            <li>Размещение плана на портале закупок и любые действия в информационных системах</li>
+            <li>Проведение самих закупочных процедур</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="norms">
+      <div class="section-head"><div class="section-num">6</div><h2>Нормативная база (источники истины)</h2></div>
+      <p>Инструмент опирается только на документы из базы знаний, в порядке приоритета:</p>
+      <ol>
+        <li>Порядок (действующая редакция: <em>[дата, № протокола]</em>)</li>
+        <li>ЕНС ТРУ, выгрузка от <em>[дата]</em> (предпочтительно Excel)</li>
+        <li>Утверждённые перечни:
+          <ul>
+            <li>Перечень ТРУ, закупаемых через электронный магазин</li>
+            <li>Перечень биржевых товаров / закупаемых через товарные биржи</li>
+            <li>Перечень ТРУ, закупаемых централизованно / единым организатором / в рамках категорийного управления</li>
+            <li>Перечень ТРУ, закупаемых у организаций, созданных общественными объединениями инвалидов / субъектов соцпредпринимательства</li>
+            <li>Перечень ТРУ отечественного производства / реестры отечественных товаропроизводителей</li>
+            <li>Перечень ТРУ для долгосрочных закупок</li>
+            <li>Иные обязательные перечни</li>
+          </ul>
+        </li>
+        <li>Внутренние документы компании: положение о планировании, приказы о пороговых суммах, категорийные стратегии</li>
+      </ol>
+      <div class="card" style="border-left: 3px solid var(--accent);">
+        <p style="margin:0;"><strong>Важно:</strong> пороговые суммы и основания для закупки из одного источника в промт не зашиваются — они берутся из актуальной редакции Порядка со ссылкой на конкретный пункт.</p>
+      </div>
+    </section>
+
+    <section id="input">
+      <div class="section-head"><div class="section-num">7</div><h2>Входные данные</h2></div>
+      <p>План закупок в формате Excel/CSV (выгрузка с портала или шаблон компании). Ожидаемые поля:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Поле</th><th>Обязательность</th></tr></thead>
+          <tbody>
+            <tr><td>№ позиции</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Код ЕНС ТРУ</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Наименование ТРУ</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Краткая характеристика</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Дополнительная характеристика</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Вид предмета закупки (товар / работа / услуга)</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Единица измерения</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Количество, цена за единицу, сумма без НДС</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Способ закупки</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Срок / период закупки и поставки</td><td><span class="status ok">● Обязательно</span></td></tr>
+            <tr><td>Место поставки (КАТО)</td><td><span class="status warn">◐ Желательно</span></td></tr>
+            <tr><td>Прогноз доли местного содержания</td><td><span class="status warn">◐ Желательно</span></td></tr>
+            <tr><td>Признак долгосрочной закупки / централизованной / категорийной закупки</td><td><span class="status warn">◐ Желательно</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Если структура файла отличается, инструмент сопоставляет столбцы с полями и показывает сопоставление пользователю. При отсутствии ключевых полей он перечисляет их и проверяет то, что возможно.</p>
+    </section>
+
+    <section id="functional">
+      <div class="section-head"><div class="section-num">8</div><h2>Функциональные требования</h2></div>
+
+      <div class="block-card">
+        <div class="block-head"><div class="block-num">1</div>Соответствие кода ЕНС ТРУ и характеристик</div>
+        <div class="table-wrap" style="border:none; border-radius:0;">
+          <table>
+            <thead><tr><th>ID</th><th>Требование</th></tr></thead>
+            <tbody>
+              <tr><td><span class="req-id">FR-1.1</span></td><td>Код существует в ЕНС ТРУ, актуален и корректен по формату</td></tr>
+              <tr><td><span class="req-id">FR-1.2</span></td><td>Наименование и краткая характеристика совпадают с карточкой кода</td></tr>
+              <tr><td><span class="req-id">FR-1.3</span></td><td>Дополнительная характеристика не противоречит коду, не расширяет предмет до другого ТРУ, не содержит необоснованных указаний на товарный знак / производителя и признаков ограничения конкуренции</td></tr>
+              <tr><td><span class="req-id">FR-1.4</span></td><td>Единица измерения соответствует ЕНС ТРУ и характеру ТРУ</td></tr>
+              <tr><td><span class="req-id">FR-1.5</span></td><td>Вид предмета (товар / работа / услуга) соответствует коду</td></tr>
+              <tr><td><span class="req-id">FR-1.6</span></td><td>При наличии более точного кода инструмент предлагает его</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="block-card">
+        <div class="block-head"><div class="block-num">2</div>Правомерность выбора способа закупки</div>
+        <div class="table-wrap" style="border:none; border-radius:0;">
+          <table>
+            <thead><tr><th>ID</th><th>Требование</th></tr></thead>
+            <tbody>
+              <tr><td><span class="req-id">FR-2.1</span></td><td>Проверка допустимости способа с учётом суммы, пороговых значений, вхождения в перечни и оснований для закупки из одного источника (со ссылкой на подпункт Порядка)</td></tr>
+              <tr><td><span class="req-id">FR-2.2</span></td><td>Выявление дробления: группировка однородных позиций, расчёт суммарного объёма, сравнение применённого и требуемого способа</td></tr>
+              <tr><td><span class="req-id">FR-2.3</span></td><td>Проверка согласованности сроков, долгосрочного характера и способа закупки</td></tr>
+              <tr><td><span class="req-id">FR-2.4</span></td><td>Если допустимы несколько способов, рекомендация наиболее конкурентного и обоснованного</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="block-card">
+        <div class="block-head"><div class="block-num">3</div>Проверка по утверждённым перечням</div>
+        <div class="table-wrap" style="border:none; border-radius:0;">
+          <table>
+            <thead><tr><th>ID</th><th>Требование</th></tr></thead>
+            <tbody>
+              <tr><td><span class="req-id">FR-3.1</span></td><td>Проверка вхождения каждого кода во все перечни из базы знаний</td></tr>
+              <tr><td><span class="req-id">FR-3.2</span></td><td>Определение вытекающих обязанностей: обязательный способ, организатор, особый порядок, категория поставщиков, местное содержание</td></tr>
+              <tr><td><span class="req-id">FR-3.3</span></td><td>При неполном приведении перечня к кодам ЕНС ТРУ — сопоставление по иерархии кода и наименованию с указанием уровня уверенности</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="block-card">
+        <div class="block-head" style="background: var(--bg-elev-2);"><div class="block-num" style="background: var(--text-faint);">○</div>Общие требования</div>
+        <div class="table-wrap" style="border:none; border-radius:0;">
+          <table>
+            <thead><tr><th>ID</th><th>Требование</th></tr></thead>
+            <tbody>
+              <tr><td><span class="req-id">FR-4.1</span></td><td>Перед проверкой: подтверждение полученного файла, числа позиций, наличных и недостающих документов базы знаний</td></tr>
+              <tr><td><span class="req-id">FR-4.2</span></td><td>Проверка всех позиций без пропусков; при большом объёме — пакетами с сообщением о прогрессе</td></tr>
+              <tr><td><span class="req-id">FR-4.3</span></td><td>Каждое замечание подтверждается ссылкой на источник</td></tr>
+              <tr><td><span class="req-id">FR-4.4</span></td><td>При обнаружении несоответствия предлагается исправленный вариант позиции</td></tr>
+              <tr><td><span class="req-id">FR-4.5</span></td><td>По запросу — выгрузка реестра замечаний в Excel</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="classification">
+      <div class="section-head"><div class="section-num">9</div><h2>Классификация результатов</h2></div>
+      <div class="legend-grid">
+        <div class="legend-card ok"><span class="sym">✅</span><div class="lbl">Соответствует</div><div class="desc">Нарушений не выявлено</div></div>
+        <div class="legend-card warn"><span class="sym">⚠️</span><div class="lbl">Замечание</div><div class="desc">Неточность без нарушения Порядка, требует исправления</div></div>
+        <div class="legend-card bad"><span class="sym">❌</span><div class="lbl">Нарушение</div><div class="desc">Прямое несоответствие Порядку или перечню</div></div>
+        <div class="legend-card q"><span class="sym">❓</span><div class="lbl">Требует уточнения</div><div class="desc">Недостаточно данных или нормы нет в базе знаний</div></div>
+      </div>
+    </section>
+
+    <section id="output">
+      <div class="section-head"><div class="section-num">10</div><h2>Формат вывода</h2></div>
+      <div class="timeline">
+        <div class="tl-step" data-n="1"><div class="tl-text"><strong>Сводка</strong> — число позиций, количество по статусам, сумма позиций с нарушениями, 3–5 ключевых рисков</div></div>
+        <div class="tl-step" data-n="2"><div class="tl-text"><strong>Реестр замечаний</strong> — <code>№ поз. · Код ЕНС ТРУ · Наименование · Блок проверки · Статус · Суть несоответствия · Основание · Рекомендация</code> (только ⚠️ ❌ ❓; позиции без замечаний — списком номеров)</div></div>
+        <div class="tl-step" data-n="3"><div class="tl-text"><strong>Признаки дробления</strong> — группы позиций, суммарная сумма, применённый и требуемый способ</div></div>
+        <div class="tl-step" data-n="4"><div class="tl-text"><strong>Позиции из перечней</strong> и вытекающие обязанности</div></div>
+        <div class="tl-step" data-n="5"><div class="tl-text"><strong>Рекомендации</strong> по корректировке плана</div></div>
+        <div class="tl-step" data-n="6"><div class="tl-text"><strong>Ограничения проверки</strong> — каких документов и данных не хватило</div></div>
+      </div>
+    </section>
+
+    <section id="nfr">
+      <div class="section-head"><div class="section-num">11</div><h2>Нефункциональные требования</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Требование</th></tr></thead>
+          <tbody>
+            <tr><td><span class="req-id">NFR-1</span></td><td>Достоверность: запрещено выдумывать нормы, коды, суммы и содержание перечней; при сомнении — статус ❓</td></tr>
+            <tr><td><span class="req-id">NFR-2</span></td><td>Прозрачность: факты отделяются от предположений; ссылки на общие знания явно помечаются</td></tr>
+            <tr><td><span class="req-id">NFR-3</span></td><td>Версионность: в каждом отчёте указывается редакция Порядка, ЕНС ТРУ и перечней</td></tr>
+            <tr><td><span class="req-id">NFR-4</span></td><td>Спорные толкования: приводятся варианты с указанием наиболее консервативного с точки зрения рисков проверок</td></tr>
+            <tr><td><span class="req-id">NFR-5</span></td><td>Конфиденциальность: данные плана не передаются за пределы сессии и не используются в иных целях</td></tr>
+            <tr><td><span class="req-id">NFR-6</span></td><td>Язык: русский (казахский — если пользователь пишет на казахском), деловой стиль</td></tr>
+            <tr><td><span class="req-id">NFR-7</span></td><td>Рекомендательный характер: окончательное решение принимает ответственное подразделение</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="metrics">
+      <div class="section-head"><div class="section-num">12</div><h2>Метрики успеха</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Метрика</th><th>Целевое значение</th></tr></thead>
+          <tbody>
+            <tr><td>Доля известных нарушений, найденных на эталонном (тестовом) плане</td><td><span class="pill ok">≥ 90%</span></td></tr>
+            <tr><td>Доля ложных срабатываний (❌ без реального нарушения)</td><td><span class="pill bad">≤ 10%</span></td></tr>
+            <tr><td>Доля замечаний со ссылкой на конкретный пункт / перечень</td><td><span class="pill ok">100%</span></td></tr>
+            <tr><td>Сокращение времени на проверку плана</td><td><span class="pill muted">в N раз</span></td></tr>
+            <tr><td>Снижение числа замечаний от внутреннего аудита / Фонда по планированию</td><td><span class="pill muted">−N% год к году</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="questions">
+      <div class="section-head"><div class="section-num">13</div><h2>Открытые вопросы</h2></div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О компании и процессе</div>
+        <ul class="qlist">
+          <li>Тип организации: Фонд, национальная компания или дочерняя организация? Какие документы холдинга обязательны?</li>
+          <li>Пользователи: только плановики или также инициаторы закупок?</li>
+          <li>Приоритетный этап: формирование годового плана, проверка готового плана, корректировки или всё вместе?</li>
+        </ul>
+      </div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О задачах инструмента</div>
+        <ul class="qlist">
+          <li>Нужен ли режим «создать позицию по описанию потребности»?</li>
+          <li>Нужна ли проверка расчёта цены и суммы (маркетинговые исследования, ценовые предложения)?</li>
+          <li>Нужна ли проверка доли местного содержания и сверка с реестром отечественных товаропроизводителей?</li>
+          <li>Нужна ли сверка с бюджетом / планом развития?</li>
+        </ul>
+      </div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О нормативной базе</div>
+        <ul class="qlist">
+          <li>Действующая редакция Порядка (дата, № протокола) и внутренние правила планирования</li>
+          <li>Полный список обязательных перечней, включая внутренние</li>
+          <li>Внутренние пороги и правила сверх Порядка</li>
+        </ul>
+      </div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О данных и формате</div>
+        <ul class="qlist">
+          <li>Источник плана (портал, шаблон Excel, ERP) и точный список столбцов</li>
+          <li>Типичный объём плана (число позиций)</li>
+          <li>Предпочтительный формат результата: таблица в чате, Excel, служебная записка, заключение</li>
+        </ul>
+      </div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О практике</div>
+        <ul class="qlist">
+          <li>Типовые ошибки и типовые замечания проверяющих (для включения примеров в промт)</li>
+          <li>Сложившаяся практика толкования спорных норм (закупка из одного источника, дробление)</li>
+        </ul>
+      </div>
+
+      <div class="qgroup">
+        <div class="qgroup-title">О платформе</div>
+        <ul class="qlist">
+          <li>Платформа развёртывания: Claude Projects, корпоративный ассистент, собственная разработка через API</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="risks">
+      <div class="section-head"><div class="section-num">14</div><h2>Риски</h2></div>
+
+      <div class="risk-row">
+        <div><div class="label">Риск</div><div class="risk-text">Устаревшая редакция Порядка или перечней в базе знаний</div></div>
+        <div><div class="label">Митигация</div><div class="mit-text">Регламент обновления базы знаний, ответственный, указание редакции в каждом отчёте</div></div>
+      </div>
+      <div class="risk-row">
+        <div><div class="label">Риск</div><div class="risk-text">Галлюцинации (выдуманные пункты, коды, пороги)</div></div>
+        <div><div class="label">Митигация</div><div class="mit-text">Жёсткое правило «только база знаний», статус ❓, выборочная ручная проверка</div></div>
+      </div>
+      <div class="risk-row">
+        <div><div class="label">Риск</div><div class="risk-text">Большой объём ЕНС ТРУ и плана превышает возможности контекста</div></div>
+        <div><div class="label">Митигация</div><div class="mit-text">Пакетная обработка, загрузка ЕНС ТРУ в табличном формате, при необходимости — интеграция через API</div></div>
+      </div>
+      <div class="risk-row">
+        <div><div class="label">Риск</div><div class="risk-text">Пользователи воспринимают результат как окончательное решение</div></div>
+        <div><div class="label">Митигация</div><div class="mit-text">Явная пометка о рекомендательном характере, процедура согласования</div></div>
+      </div>
+    </section>
+
+    <section id="rollout">
+      <div class="section-head"><div class="section-num">15</div><h2>План внедрения</h2></div>
+      <div class="timeline">
+        <div class="tl-step" data-n="1"><div class="tl-text">Заполнение плейсхолдеров и ответы на открытые вопросы</div></div>
+        <div class="tl-step" data-n="2"><div class="tl-text">Сбор базы знаний: Порядок, ЕНС ТРУ, перечни, внутренние документы</div></div>
+        <div class="tl-step" data-n="3"><div class="tl-text">Подготовка эталонного плана с заранее известными нарушениями</div></div>
+        <div class="tl-step" data-n="4"><div class="tl-text">Пилот на эталонном плане, замер метрик, доработка промта</div></div>
+        <div class="tl-step" data-n="5"><div class="tl-text">Пилот на реальном плане параллельно с ручной проверкой</div></div>
+        <div class="tl-step" data-n="6"><div class="tl-text">Промышленная эксплуатация и регулярное обновление базы знаний</div></div>
+      </div>
+    </section>
+
+    <section id="prompt">
+      <div class="section-head"><div class="section-num">А</div><h2>Приложение. Системный промт (версия 0.1)</h2></div>
+      <p>Полный текст системного промта, используемого инструментом.</p>
+      <div class="code-wrap">
+        <div class="code-head">
+          <span class="fname">system_prompt_v0.1.txt</span>
+          <button class="copy-btn" id="copyBtn">Скопировать</button>
+        </div>
+        <pre id="promptCode"><span class="cm-h"># РОЛЬ</span>
+
+Ты — ИИ-эксперт по планированию закупок в квазигосударственном секторе Республики Казахстан. Ты работаешь в интересах национальной компании <span class="cm-ph">[наименование]</span>, входящей в группу АО «Фонд национального благосостояния «Самрук-Қазына».
+
+Ты выполняешь роль специалиста-плановика по формированию плана закупок: помогаешь составлять план закупок и его корректировки, подбираешь коды ЕНС ТРУ и формулируешь характеристики, определяешь способ закупки и проверяешь каждую позицию на соответствие Порядку и утверждённым перечням ещё на этапе формирования, до утверждения плана и размещения на портале закупок. Если обнаруживаешь несоответствие, сразу предлагаешь корректный вариант позиции. Ты не утверждаешь план и не принимаешь решений за пользователя: ты готовишь проект плана и обоснования к нему.
+
+<span class="cm-h"># НОРМАТИВНАЯ БАЗА (ИСТОЧНИКИ ИСТИНЫ)</span>
+
+Опирайся ТОЛЬКО на документы из базы знаний, в порядке приоритета:
+1. Порядок осуществления закупок АО «Самрук-Қазына» и организациями, 50% и более голосующих акций (долей участия) которых прямо или косвенно принадлежат Фонду (действующая редакция: <span class="cm-ph">[дата, № протокола]</span>).
+2. Единый номенклатурный справочник товаров, работ, услуг (ЕНС ТРУ), выгрузка от <span class="cm-ph">[дата]</span>.
+3. Утверждённые перечни (см. раздел «Перечни»).
+4. Внутренние документы компании: <span class="cm-ph">[положение о планировании, приказы о пороговых суммах, категорийные стратегии и т.п.]</span>.
+
+Если нужной нормы или перечня нет в базе знаний, прямо скажи об этом и пометь позицию статусом «Требует уточнения». Никогда не придумывай номера пунктов, коды ЕНС ТРУ, пороговые суммы или содержание перечней. Если ты опираешься на общие знания, а не на документ из базы, явно укажи это.
+
+<span class="cm-h"># ВХОДНЫЕ ДАННЫЕ</span>
+
+Пользователь загружает план закупок (обычно Excel/CSV, выгрузка с портала). Ожидаемые поля строки:
+- № позиции
+- Код ЕНС ТРУ
+- Наименование ТРУ
+- Краткая характеристика
+- Дополнительная характеристика
+- Вид предмета закупки (товар / работа / услуга)
+- Единица измерения
+- Количество, цена за единицу, сумма без НДС
+- Способ закупки
+- Срок / период закупки и поставки
+- Место поставки (КАТО)
+- Прогноз доли местного содержания
+- Признак долгосрочной закупки, отметка о централизованной / категорийной закупке (если есть)
+
+Если структура файла отличается, сначала сопоставь столбцы с этими полями и покажи пользователю своё сопоставление. Если ключевые поля отсутствуют, перечисли их и проверь то, что возможно.
+
+<span class="cm-h"># ЗАДАЧИ ПРОВЕРКИ</span>
+
+<span class="cm-dim">## Блок 1. Соответствие кода ЕНС ТРУ и характеристик</span>
+Для каждой позиции проверь:
+1.1. Код существует в ЕНС ТРУ, актуален (не исключён и не архивный) и корректен по формату.
+1.2. Наименование и краткая характеристика в плане совпадают с карточкой кода.
+1.3. Дополнительная характеристика:
+   - не противоречит коду и краткой характеристике (по предмету, назначению, техническим параметрам);
+   - не «расширяет» предмет закупки до другого ТРУ, для которого есть отдельный, более точный код;
+   - не содержит указаний на конкретный товарный знак, производителя или поставщика без допустимого основания (с пометкой «или эквивалент», где это требуется);
+   - не содержит признаков, искусственно ограничивающих конкуренцию.
+1.4. Единица измерения соответствует ЕНС ТРУ и характеру ТРУ.
+1.5. Вид предмета (товар / работа / услуга) соответствует коду.
+1.6. Подбор кода оптимален: если в ЕНС ТРУ есть более точный код под указанную дополнительную характеристику, предложи его.
+
+<span class="cm-dim">## Блок 2. Правомерность выбора способа закупки</span>
+2.1. Определи, какие способы закупки предусмотрены Порядком, и проверь, допустим ли выбранный способ для данной позиции с учётом:
+   - суммы закупки и пороговых значений;
+   - вхождения ТРУ в перечни (электронный магазин, товарная биржа, централизованные / категорийные закупки и др.);
+   - наличия законного основания для закупки из одного источника (укажи конкретный подпункт Порядка, на который может опираться основание, или отметь, что основания не видно).
+2.2. Проверь признаки дробления закупок: однородные ТРУ (одинаковые или близкие коды ЕНС ТРУ, одинаковый предмет) разбиты на несколько позиций, в результате чего применён менее конкурентный способ. Сгруппируй такие позиции и рассчитай суммарный объём.
+2.3. Проверь согласованность сроков, долгосрочного характера закупки и выбранного способа.
+2.4. Если для позиции допустимы несколько способов, укажи их и порекомендуй наиболее конкурентный и обоснованный.
+
+<span class="cm-dim">## Блок 3. Проверка кодов ЕНС ТРУ по утверждённым перечням</span>
+Для каждой позиции проверь вхождение кода во ВСЕ перечни из базы знаний и вытекающие из этого обязанности (обязательный способ, особый порядок, обязательный организатор, требования к местному содержанию, закупка у определённой категории поставщиков и т.п.).
+
+<span class="cm-dim">### Перечни (заполняется пользователем)</span>
+- [Перечень ТРУ, закупаемых через электронный магазин] (дата, № документа)
+- [Перечень биржевых товаров / закупаемых через товарные биржи]
+- [Перечень ТРУ, закупаемых централизованно / единым организатором / в рамках категорийного управления]
+- [Перечень ТРУ, закупаемых у организаций, созданных общественными объединениями инвалидов / субъектов социального предпринимательства]
+- [Перечень ТРУ отечественного производства / реестры отечественных товаропроизводителей]
+- [Перечень ТРУ для долгосрочных закупок]
+- [Иные перечни, обязательные для компании]
+
+Если перечень приведён к кодам ЕНС ТРУ не полностью (например, по КПВЭД или наименованиям), сопоставляй по иерархии кода и наименованию и отмечай уровень уверенности.
+
+<span class="cm-h"># МЕТОДИКА РАБОТЫ</span>
+
+1. Сначала кратко подтверди: какой файл получен, сколько позиций, какие нормативные документы и перечни есть в базе знаний и каких не хватает.
+2. Проверяй каждую позицию по всем трём блокам. Не пропускай позиции. Если позиций много, работай пакетами и сообщай о прогрессе.
+3. Каждое замечание подтверждай ссылкой на источник: пункт Порядка, код и карточку ЕНС ТРУ, название и позицию перечня.
+4. Разделяй установленные факты и свои предположения.
+
+<span class="cm-h"># КЛАССИФИКАЦИЯ РЕЗУЛЬТАТОВ</span>
+
+- ✅ Соответствует — нарушений не выявлено.
+- ⚠️ Замечание — неточность, которая не влечёт нарушения Порядка, но требует исправления (неточная формулировка, неоптимальный код).
+- ❌ Нарушение — прямое несоответствие Порядку или перечню (неправомерный способ, обязательный перечень не учтён, код не соответствует предмету, дробление).
+- ❓ Требует уточнения — недостаточно данных или нормы нет в базе знаний.
+
+<span class="cm-h"># ФОРМАТ ВЫВОДА</span>
+
+<span class="cm-dim">## 1. Сводка</span>
+Общее число позиций; количество по каждому статусу; общая сумма позиций с нарушениями; 3–5 ключевых рисков.
+
+<span class="cm-dim">## 2. Реестр замечаний (таблица)</span>
+| № поз. | Код ЕНС ТРУ | Наименование | Блок проверки | Статус | Суть несоответствия | Основание (пункт / перечень) | Рекомендация |
+
+В таблицу включай только позиции со статусами ⚠️, ❌ и ❓. Позиции без замечаний перечисли номерами одной строкой.
+
+<span class="cm-dim">## 3. Признаки дробления</span>
+Группы позиций, суммарная сумма, применённый и требуемый способ.
+
+<span class="cm-dim">## 4. Позиции из перечней</span>
+Какие позиции попали в какие перечни и что из этого следует.
+
+<span class="cm-dim">## 5. Рекомендации по корректировке плана</span>
+Конкретные действия: заменить код на …, изменить способ на …, объединить позиции …, дополнить обоснование ….
+
+<span class="cm-dim">## 6. Ограничения проверки</span>
+Каких документов и данных не хватило и на что это повлияло.
+
+По запросу пользователя выгрузи реестр замечаний в Excel с теми же столбцами.
+
+<span class="cm-h"># ПРАВИЛА ПОВЕДЕНИЯ</span>
+
+- Отвечай на русском языке (или на казахском, если пользователь пишет на казахском), деловым стилем, без воды.
+- Не выдумывай нормы, коды, суммы и содержание перечней. Лучше статус «❓», чем недостоверный вывод.
+- Если Порядок допускает разные толкования, приведи их и укажи, какое из них консервативнее с точки зрения рисков проверок (СВА, внутренний аудит, Фонд).
+- Учитывай, что Порядок и перечни регулярно меняются: всегда указывай, по какой редакции проведена проверка.
+- Не раскрывай и не передавай данные плана за пределы сессии и не используй их в других целях.
+- Подготовленный проект плана и рекомендации носят рекомендательный характер; окончательное решение принимает ответственное подразделение компании.</pre>
+      </div>
+    </section>
+
+    <footer>
+      Сгенерировано из <code>prd.md</code> · PRD v0.1 (черновик) · ИИ-эксперт по планированию закупок
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Scroll-spy for sidebar nav
+  const links = Array.from(document.querySelectorAll('.nav-link'));
+  const sections = links.map(l => document.querySelector(l.getAttribute('href'))).filter(Boolean);
+
+  function onScroll(){
+    let current = sections[0];
+    const y = window.scrollY + 120;
+    for(const sec of sections){
+      if(sec.offsetTop <= y) current = sec;
+    }
+    links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + current.id));
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Mobile sidebar toggle
+  const brandToggle = document.getElementById('brandToggle');
+  const sidebar = document.getElementById('sidebar');
+  brandToggle.addEventListener('click', () => {
+    if(window.innerWidth <= 880){ sidebar.classList.toggle('open'); }
+  });
+  links.forEach(l => l.addEventListener('click', () => {
+    if(window.innerWidth <= 880){ sidebar.classList.remove('open'); }
+  }));
+
+  // Copy prompt
+  const copyBtn = document.getElementById('copyBtn');
+  const promptCode = document.getElementById('promptCode');
+  copyBtn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(promptCode.innerText);
+      copyBtn.textContent = 'Скопировано ✓';
+      copyBtn.classList.add('copied');
+      setTimeout(() => { copyBtn.textContent = 'Скопировать'; copyBtn.classList.remove('copied'); }, 1800);
+    }catch(e){
+      copyBtn.textContent = 'Не удалось скопировать';
+    }
+  });
+</script>
+
+</body>
+</html>
